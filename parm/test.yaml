@@ -1,0 +1,9 @@
+channels: &cris-fsr_n20_channels
+@@cris-fsr_n20_channels@@
+#
+use_flag: [
+@@cris-fsr_n20_iuses@@
+]
+use_flag_clddet: [
+@@cris-fsr_n20_icld_dets@@
+]
