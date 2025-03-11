@@ -1,243 +1,187 @@
-atms_npp_channels: &atms_npp_channels
-@@atms_npp_channels@@
-atms_npp_use_flag: &atms_npp_use_flag [
-@@atms_npp_iuses@@
-]
-
-# application-agnostic anchors that specify observation errors
-# applicable to Variational, HofX3D
-
-# reusable latitude bands for all observation types
-_conventional obs localizations: &heightAndHorizObsLoc
-  _blank: null
-
-_nonconventional obs localizations: &horizObsLoc
-  _blank: null
-
-_obs space: &ObsSpace
-  obs perturbations seed: 1
-  io pool:
-    max pool size: 10
-  distribution:
-    name: RoundRobin
-
-_obs error diagonal: &ObsErrorDiagonal
-  covariance model: diagonal
-  # Note: the same 'obs perturbations seed' must be used for all members for the 'zero-mean perturbations' option to work
-  zero-mean perturbations: true
-  member: 1
-  number of members: 1
-
-_get values: &GetValues
-  nnearest: 3
-
-_multi iteration filter: &multiIterationFilter
-  apply at iterations: 0,1,2,3,4,5
-# ObsAnchors and ObsErrorAnchors are automatically prepended above this line
-_iteration: &iterationConfig
-  geometry:
-    nml_file: ./namelist.atmosphere_15km
-    streams_file: ./streams.atmosphere_15km
-    deallocate non-da fields: true
-    interpolation type: unstructured
-  gradient norm reduction: 1e-3
 _member: &memberConfig
-  date: &analysisDate '2022-05-26T19:00:00Z'
+  date: &analysisDate '@analysisDate@'
   state variables: &incvars [spechum,surface_pressure,temperature,uReconstructMeridional,uReconstructZonal]
   stream name: ensemble
 
 output:
-  filename: ./an.$Y-$M-$D_$h.$m.$s.nc
+  filename: mpasin.nc
   stream name: analysis
 variational:
   minimizer:
     algorithm: DRPCG
   iterations:
-  - <<: *iterationConfig
-    diagnostics:
-      departures: ombg
+  - geometry:
+      nml_file: ./namelist.atmosphere
+      streams_file: ./streams.atmosphere
+      deallocate non-da fields: true
+      interpolation type: unstructured
+    gradient norm reduction: 1e-3
     ninner: 50
-  - <<: *iterationConfig
+  - geometry:
+      nml_file: ./namelist.atmosphere
+      streams_file: ./streams.atmosphere
+      deallocate non-da fields: true
+      interpolation type: unstructured
+    gradient norm reduction: 1e-3
     ninner: 50
-final:
-  diagnostics:
-    departures: oman
 cost function:
   cost type: 3D-Var
   time window:
-     begin: '2022-05-26T18:00:00Z'
-     length: PT2H
+     begin: '@beginDate@'
+     length: PT4H
   jb evaluation: false
   geometry:
-    nml_file: ./namelist.atmosphere_15km
-    streams_file: ./streams.atmosphere_15km
+    nml_file: ./namelist.atmosphere
+    streams_file: ./streams.atmosphere
     deallocate non-da fields: true
     interpolation type: unstructured
-  analysis variables: *incvars 
+  analysis variables: *incvars
   background:
     state variables: [spechum,surface_pressure,temperature,uReconstructMeridional,uReconstructZonal,theta,rho,u,qv,pressure,landmask,xice,snowc,skintemp,ivgtyp,isltyp,snowh,vegfra,u10,v10,lai,smois,tslb,pressure_p,qc,qi,qg,qr,qs,cldfrac]
-    filename: ./bg.2022-05-26_19.00.00.nc
-    date: *analysisDate 
+    filename: mpasin.nc
+    date: *analysisDate
   background error:
-    covariance model: ensemble
-    localization:
-      localization method: SABER
-      saber central block:
-        saber block name: BUMP_NICAS
-        active variables: *incvars
-        read:
-          io:
-            data directory: ./BUMP_files
-            files prefix: bumploc_1000km6km 
-          drivers:
-            multivariate strategy: duplicated
-            read local nicas: true
-          model:
-            level for 2d variables: last
-    members from template:
-      template:
-        <<: *memberConfig
-        filename: ./ensemble/%iMember%/restart.nc
-      pattern: %iMember%
-      start: 1
-      zero padding: 1 
-      nmembers: 5 
+    covariance model: hybrid
+    components:
+    - covariance:
+        covariance model: SABER
+        saber central block:
+          saber block name: BUMP_NICAS
+          active variables: &ctlvars [stream_function,velocity_potential,temperature,spechum,surface_pressure]
+          read:
+            io:
+              data directory: data/static_bec/nicas
+              files prefix: mpas
+            drivers:
+              multivariate strategy: univariate
+              read local nicas: true
+        saber outer blocks:
+        - saber block name: StdDev
+          read:
+            model file:
+              filename: data/static_bec/stddev.nc
+              date: *analysisDate
+              stream name: control
+        - saber block name: BUMP_VerticalBalance
+          read:
+            io:
+              data directory: data/static_bec/vbal
+              files prefix: mpas_vbal
+            drivers:
+              read local sampling: true
+              read vertical balance: true
+            vertical balance:
+              vbal:
+              - balanced variable: velocity_potential
+                unbalanced variable: stream_function
+                diagonal regression: true
+              - balanced variable: temperature
+                unbalanced variable: stream_function
+              - balanced variable: surface_pressure
+                unbalanced variable: stream_function
+        linear variable change:
+          linear variable change name: Control2Analysis
+          input variables: *ctlvars
+          output variables: *incvars
+      weight:
+        value: "@HYB_WGT_STATIC@"
+    - covariance:
+        covariance model: ensemble
+        localization:
+          localization method: SABER
+          saber central block:
+            saber block name: BUMP_NICAS
+            active variables: *incvars
+            read:
+              io:
+                data directory: data/bumploc
+                files prefix: bumploc
+              drivers:
+                multivariate strategy: duplicated
+                read local nicas: true
+              model:
+                level for 2d variables: last
+        members from template:
+          template:
+            <<: *memberConfig
+            filename: ./data/ens/mem%iMember%.nc
+          pattern: "%iMember%"
+          start: 1
+          zero padding: 3
+          nmembers: 30
+      weight:
+        value: "@HYB_WGT_ENS@"
   observations:
      observers:
      - obs space:
-         name: Aircraft
-         obsdatain:
-           engine:
-             type: H5File
-             obsfile: Data/obs/rass_tsen_obs_2022052619.nc4
-         obsdataout:
-           engine:
-             type: H5File
-             obsfile: Data/hofx/rass_tsen_obs_2022052619.nc4
-         simulated variables: [airTemperature]
-         observed variables: [airTemperature]
-       obs operator:
-         name: VertInterp
-       obs error:
-         covariance model: diagonal
-       obs filters:
-       - filter: Bounds Check
-         filter variables:
-         - name: airTemperature@GsiUseFlag 
-         minvalue: 0.5 
-         maxvalue: 1.5 
-         action:
-            name: accept 
-
-     - obs space:
-         name: sonde  
-         obsdatain:
-           engine:
-             type: H5File
-             obsfile: Data/obs/sondes_tsen_obs_2022052619.nc4
-         obsdataout:
-           engine:
-             type: H5File
-             obsfile: Data/hofx/rass_tsen_obs_2022052619.nc4
-         simulated variables: [airTemperature]
-         observed variables: [airTemperature]
-       obs operator:
-         name: VertInterp
-       obs error:
-         covariance model: diagonal
-       obs filters:
-       - filter: Bounds Check
-         filter variables:
-         - name: airTemperature@GsiUseFlag 
-         minvalue: 0.5 
-         maxvalue: 1.5 
-         action:
-            name: accept 
-
-
-     - obs space:
-         name: sonde
-         obsdatain:
-           engine:
-             type: H5File
-             obsfile: Data/obs/sondes_uv_obs_2022052619.nc4
-         simulated variables: [windEastward, windNorthward]
-       obs operator:
-         name: VertInterp
-         vertical coordinate: air_pressure
-         observation vertical coordinate: pressure
-         interpolation method: log-linear
-       obs error:
-         covariance model: diagonal ufo
-       obs filters:
-       - filter: PreQC
-         maxvalue: 3
-       - filter: Background Check
-         filter variables:
-         - name: windEastward
-         - name: windNorthward
-         threshold: 6.0
-       monitoring only: true
-
-     - obs space:
          name: atms_npp
+         _anchor_channel: &channel_atms_npp [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 
+                           21, 22]
+         _anchor_iuse: &iuse_atms_npp [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, 1, 1, 1, 1, 1, 
+                        1, 1]
+         _anchor_icld_det: &icld_det_atms_npp [-2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2, 
+                            -2, -2]
+         distribution:
+           name: "RoundRobin"
          obsdatain:
            engine:
              type: H5File
-             obsfile: Data/obs/atms_npp_obs_2022052619.nc
+             obsfile: data/obs/ioda_atms_npp.nc
          obsdataout:
            engine:
              type: H5File
-             obsfile: Data/hofx/rass_atms_obs_2022052619.nc4
+             obsfile: jdiag_atms_npp.nc4
          simulated variables: [brightnessTemperature]
          observed variables: [brightnessTemperature]
-         channels: *atms_npp_channels
+         channels: &atms_npp_channels 1-22
        obs operator:
            name: CRTM
-           Absorbers: [H2O,O3]
+           Absorbers: [H2O,O3,CO2]
+           Clouds: [Water, Ice]
+           Cloud_Fraction: 1.0
+           Cloud_Seeding: true
            SurfaceWindGeoVars: uv
            obs options:
              Sensor_ID: atms_npp
              EndianType: little_endian
-             CoefficientPath: Data/crtm_2.4.0/
+             CoefficientPath: data/crtm/
              IRVISlandCoeff: IGBP
            linear obs operator:
              Absorbers: [H2O, O3]
+       obs localizations:
+         - localization method: Horizontal Gaspari-Cohn
+           lengthscale: 300e3 # orig
 
        obs bias:
-         input file:  Data/obs/atms_npp.satbias.nc4
-         #input file:  /scratch1/NCEPDEV/fv3-cam/Xiaoyan.Zhang/mpas_jedi_conus/satbias_atms_Emily/gdas.t18z.atms_npp.satbias.nc4
-         #input file:  Data/obs/atms_npp.satbias_2022051619.nc4
-         output file: Data/bc/out_atms_npp.satbias.nc
+         input file:  data/obs/atms_npp.satbias.nc4
+         output file: out_atms_npp.satbias.nc4
          variational bc:
            predictors:
            - name: constant
-           - name: lapse_rate
+           - name: lapseRate
              order: 2
-             tlapse: &atms_npp_tlapse  Data/obs/atms_npp.tlapse.txt
-           - name: lapse_rate
+             tlapse: &atms_npp_tlapse  data/obs/atms_npp.tlapse.txt
+           - name: lapseRate
              tlapse: *atms_npp_tlapse
-           - name: emissivity
-           - name: scan_angle
+           - name: emissivityJacobian
+           - name: sensorScanAngle
              order: 4
-           - name: scan_angle
+           - name: sensorScanAngle
              order: 3
-           - name: scan_angle
+           - name: sensorScanAngle
              order: 2
-           - name: scan_angle
+           - name: sensorScanAngle
          covariance:
            minimal required obs number: 20
            variance range: [1.0e-6, 10.0]
            step size: 1.0e-4
            largest analysis variance: 10000.0
            prior:
-             input file: Data/obs/atms_npp.satbias_cov.nc4
-             #input file: /scratch1/NCEPDEV/fv3-cam/Xiaoyan.Zhang/mpas_jedi_conus/satbias_atms_Emily/gdas.t18z.atms_npp.satbias_cov.nc4
-             #input file: Data/obs/atms_npp.satbias_cov_2022052619.nc4
+             input file: data/obs/atms_npp.satbias_cov.nc4
              inflation:
                ratio: 1.1
                ratio for small dataset: 2.0
-           output file: Data/bc/out_atms_npp.satbias_cov.nc
+           output file: out_atms_npp.satbias_cov.nc4
 
        obs pre filters:
        # Step 0-A: Create Diagnostic Flags
@@ -359,6 +303,7 @@ cost function:
                                   0.000,  0.000,  0.000,  0.000,  0.000,
                                   0.020,  0.030,  0.030,  0.030,  0.030,
                                   0.050,  0.100]
+
        # Calculate symmetric observation error
        - filter: Variable Assignment
          assignments:
@@ -422,18 +367,14 @@ cost function:
 
        # Regional Domain Check
        - filter: Bounds Check
-         fileter variables:
+         filter variables:
          - name: brightnessTemperature
+           channels: *atms_npp_channels
          test variables:
-         - name: LAMDomainCheck@ObsFunction
-           options: 
-             map_projection: circle
-             save: true
-             cenlat: 38.5 
-             cenlon: -97.5
-             #radius: 1700000
-             radius: 1700
-         minvalue: 1.0
+         - name: GeoVaLs/observable_domain_mask
+           flag all filter variables if any test variable is out of bounds: true
+           minvalue: 0.0
+           maxvalue: 0.5
 
        # Step 0-C: Assign Initial All-Sky Observation Error
        - filter: Perform Action
@@ -445,7 +386,6 @@ cost function:
            error function:
              name: InitialObsError@DerivedMetaData
              channels: *atms_npp_channels
-
 
        # Step 1: Remove Observations from the Edge of the Scan
        - filter: Domain Check
@@ -461,9 +401,10 @@ cost function:
              flag: ScanEdgeRemoval
            - name: reject
 
-       # Step 2: Data Thinning
+       # Step 2: data Thinning
        - filter: Gaussian Thinning
-         horizontal_mesh: 145
+         #horizontal_mesh: 145
+         horizontal_mesh: 60
          use_reduced_horizontal_grid: true
          distance_norm: geodesic
        #  round_horizontal_bin_count_to_nearest: true
@@ -728,7 +669,11 @@ cost function:
              channels: *atms_npp_channels
              use passive_bc: true
              sensor: atms_npp
-             use_flag: *atms_npp_use_flag
+             use_flag: [ 1,  1,  1,  1,  1,
+                         1,  1,  1,  1,  1,
+                         1,  1,  1, -1, -1,
+                         1,  1,  1,  1,  1,
+                         1,  1]
          maxvalue: 1.0e-12
          actions:
            - name: set
@@ -746,13 +691,14 @@ cost function:
            channels: *atms_npp_channels
            options:
              channels: *atms_npp_channels
-             use_flag: *atms_npp_use_flag
+             use_flag: [ 1,  1,  1,  1,  1,
+                         1,  1,  1,  1,  1,
+                         1,  1,  1, -1, -1,
+                         1,  1,  1,  1,  1,
+                         1,  1]
          minvalue: 1.0e-12
          actions:
            - name: set
              flag: UseflagCheck
              ignore: rejected observations
            - name: reject
-
-
-
