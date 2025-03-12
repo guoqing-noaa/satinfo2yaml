@@ -1,8 +1,3 @@
-_anchor_channel: &channel_cris-fsr_n20 [1]
-_anchor_iuse: &iuse_cris-fsr_n20 [1]
-_anchor_icld_det: &icld_det_cris-fsr_n20 [1]
-_anchor_error: &error_cris-fsr_n20 [1]
-_anchor_ermax: &ermax [1]
 
 _member: &memberConfig
   date: &analysisDate '2024-05-27T00:00:00Z'
@@ -77,6 +72,11 @@ cost function:
      #  -----------------------
      - obs space:
          name: cris-fsr_n20 
+         _anchor_channel: &channel_cris-fsr_n20 [1]
+         _anchor_iuse: &iuse_cris-fsr_n20 [1]
+         _anchor_icld_det: &icld_det_cris-fsr_n20 [1]
+         _anchor_error: &error_cris-fsr_n20 [1]
+         _anchor_errmax: &errmax [1]
          distribution:
            name: "RoundRobin"
            halo size: 100e3
@@ -512,7 +512,7 @@ cost function:
                channels: *channel_cris-fsr_n20
                options:
                  channels: *channel_cris-fsr_n20
-             obserr_bound_max: *ermax_cris-fsr_n20
+             obserr_bound_max: *errmax_cris-fsr_n20
              error parameter vector: *error_cris-fsr_n20
          action:
            name: reject
