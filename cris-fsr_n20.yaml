@@ -76,7 +76,7 @@ cost function:
          _anchor_iuse: &iuse_cris-fsr_n20 [1]
          _anchor_icld_det: &icld_det_cris-fsr_n20 [1]
          _anchor_error: &error_cris-fsr_n20 [1]
-         _anchor_errmax: &errmax_cris-fsr_n20 [1]
+         _anchor_ermax: &ermax_cris-fsr_n20 [1]
          distribution:
            name: "RoundRobin"
            halo size: 100e3
