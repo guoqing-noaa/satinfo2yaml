@@ -15,7 +15,7 @@ def list_to_delimited_string(lst, spaces='  ', delimiter=', ', elements_per_line
   lines = [delimiter.join(elements[i:i + elements_per_line]) for i in range(0, len(elements), elements_per_line)]
   # Add a comma at the end of each line except the last line
   formatted_lines = [spaces+line + delimiter if i < len(lines) - 1 else spaces+line for i, line in enumerate(lines)]
-  formatted_lines[0] = formatted_lines[0].lstrip(' ')
+  ###formatted_lines[0] = formatted_lines[0].lstrip(' ')
   return formatted_lines
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -129,6 +129,7 @@ with open(yfile2, 'r') as infile, open(yfile, 'w') as outfile:
     in_buffer_zone = False
     just_read_new_obs_space = False
     use_obs = False
+    anchor_skip_old_values = False
     #
     for line in infile:
         if "obs space:" in line:
@@ -142,6 +143,7 @@ with open(yfile2, 'r') as infile, open(yfile, 'w') as outfile:
                 buffer_zone = []
                 in_buffer_zone = False
                 use_obs = False
+                anchor_skip_old_values = False
             #~~~~~
             just_read_new_obs_space = True
             in_buffer_zone = True
@@ -156,49 +158,33 @@ with open(yfile2, 'r') as infile, open(yfile, 'w') as outfile:
             # ~~~~~~
             if not use_obs: # check whether it is a satellite observation
                 for obs,info in dcSatInfo.items():
-                    if obs in line: 
+                    if obs in line:
                         use_obs = True
                         break
-        elif "_anchor_icld_det:" in line:
-            mysis = line.split('&')[1].strip().split('[')[0].strip().split('_',2)[2] # get the SIS id
+
+        elif "_anchor_" in line:
+            if "_anchor_channel:" in line:
+                anchor_name = "channel"
+            elif "_anchor_iuse:" in line:
+                anchor_name = "iuse"
+            elif "_anchor_error:" in line:
+                anchor_name = "error"
+            elif "_anchor_ermax:" in line:
+                anchor_name = "ermax"
+            elif "_anchor_icld_det:" in line:
+                anchor_name = "icld_det"
+            mysis = line.split('&')[1].strip().split('[')[0].strip()[len(f'{anchor_name}_'):] # get the SIS id
             knt = line.find('&') + 1
             pre_spaces = ' ' * knt
-            tmp_str = list_to_delimited_string(dcSatInfo[mysis]['icld_det'], pre_spaces)
+            tmp_str = list_to_delimited_string(dcSatInfo[mysis][anchor_name], pre_spaces)
             new_str = '\n'.join(map(str, tmp_str))
-            line = line.replace(f'&icld_det_{mysis} [1]', f'&icld_det_{mysis} [{new_str}]').rstrip(' ')
+            if f'&{anchor_name}_{mysis} [1]' in line: # simple template [1]
+                line = line.replace(f'&{anchor_name}_{mysis} [1]', f'&{anchor_name}_{mysis} [\n{new_str}]').rstrip(' ')
+            else:
+                line = line.replace(f'&{anchor_name}_{mysis} [', f'&{anchor_name}_{mysis} [\n{new_str}]').rstrip(' ')
+                anchor_skip_old_values = True
             buffer_zone.append(line)
-        elif "_anchor_channel:" in line:
-            mysis = line.split('&')[1].strip().split('[')[0].strip().split('_',1)[1] # get the SIS id
-            knt = line.find('&') + 1
-            pre_spaces = ' ' * knt
-            tmp_str = list_to_delimited_string(dcSatInfo[mysis]['channel'], pre_spaces)
-            new_str = '\n'.join(map(str, tmp_str))
-            line = line.replace(f'&channel_{mysis} [1]', f'&channel_{mysis} [{new_str}]').rstrip(' ')
-            buffer_zone.append(line)
-        elif "_anchor_iuse:" in line:
-            mysis = line.split('&')[1].strip().split('[')[0].strip().split('_',1)[1] # get the SIS id
-            knt = line.find('&') + 1
-            pre_spaces = ' ' * knt
-            tmp_str = list_to_delimited_string(dcSatInfo[mysis]['iuse'], pre_spaces)
-            new_str = '\n'.join(map(str, tmp_str))
-            line = line.replace(f'&iuse_{mysis} [1]', f'&iuse_{mysis} [{new_str}]').rstrip(' ')
-            buffer_zone.append(line)
-        elif "_anchor_error:" in line:
-            mysis = line.split('&')[1].strip().split('[')[0].strip().split('_',1)[1] # get the SIS id
-            knt = line.find('&') + 1
-            pre_spaces = ' ' * knt
-            tmp_str = list_to_delimited_string(dcSatInfo[mysis]['error'], pre_spaces)
-            new_str = '\n'.join(map(str, tmp_str))
-            line = line.replace(f'&error_{mysis} [1]', f'&error_{mysis} [{new_str}]').rstrip(' ')
-            buffer_zone.append(line)
-        elif "_anchor_errmax:" in line:
-            mysis = line.split('&')[1].strip().split('[')[0].strip().split('_',1)[1] # get the SIS id
-            knt = line.find('&') + 1
-            pre_spaces = ' ' * knt
-            tmp_str = list_to_delimited_string(dcSatInfo[mysis]['ermax'], pre_spaces) # satinfo uses ermax instead of errmax
-            new_str = '\n'.join(map(str, tmp_str))
-            line = line.replace(f'&errmax_{mysis} [1]', f'&errmax_{mysis} [{new_str}]').rstrip(' ')
-            buffer_zone.append(line)
+
         elif in_buffer_zone:
             buffer_zone.append(line)
 
