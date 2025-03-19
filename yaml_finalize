@@ -184,7 +184,10 @@ with open(yfile2, 'r') as infile, open(yfile, 'w') as outfile:
                 line = line.replace(f'&{anchor_name}_{mysis} [', f'&{anchor_name}_{mysis} [\n{new_str}]').rstrip(' ')
                 anchor_skip_old_values = True
             buffer_zone.append(line)
-
+        elif anchor_skip_old_values:
+            if "distribution:" in line:
+                anchor_skip_old_values = False
+                buffer_zone.append(line)
         elif in_buffer_zone:
             buffer_zone.append(line)
 
