@@ -97,19 +97,34 @@ if dcConvInfo: # if non empty
         if not os.path.exists(iodafile):
             for key in keys_to_remove:
                 dcConvInfo.pop(key,None) # `None` prevents KeyError if key doesn't exist
+# ~~~~~~~~~~~~~
+# remove some SIS if satellite obs files not available
+if dcSatInfo: # if non empty
+    dcOBS={
+        'ioda_atms_npp.nc': ['atms_npp'],
+        'ioda_cris-fsr_n20.nc': ['cris-fsr_n20'],
+        }
+    for iodafile, keys_to_remove in dcOBS.items():
+        if not os.path.exists(iodafile):
+            for key in keys_to_remove:
+                dcSatInfo.pop(key,None) # `None` prevents KeyError if key doesn't exist
 
 # ~~~~~~~~~~~~~
 # assemble a final conventional obs use list
 conv_list = []
 for key,value in dcConvInfo.items():
-    if value['iuse'] == "1":
+    if value['iuse'] != "0":
         conv_list.append(key)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # if both conv_list and dcSatInfo are empty, print a warning message
 #
 if not conv_list and not dcSatInfo:
-    print("Warning: no convinfo/satinfo or empty/corrupt convinfo/satinfo")
+    print("WARNING: no convinfo/satinfo, empty/corrupt convinfo/satinfo or ioda files not available")
+elif not conv_list:
+    print("INFO: no convinfo, empty/corrupt convinfo, or conventional ioda files not available")
+elif not dcSatInfo:
+    print("INFO: no satinfo or empty/corrupt satinfo, or satellite ioda files not available")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # generate the yaml file on the fly
@@ -166,8 +181,8 @@ with open(yfile2, 'r') as infile, open(yfile, 'w') as outfile:
                         break
 
         elif "_anchor_" in line:
-            if not dcSatInfo:
-                print("found a sat anchor, but no satinfo or empty/corrupt satinfo")
+            if not use_obs:
+                #print("found a sat anchor, but the SIS is not in 'satinfo' or empty/corrupt 'satinfo'")
                 continue
             if "_anchor_channel:" in line:
                 anchor_name = "channel"
