@@ -14,7 +14,7 @@ def list_to_delimited_string(lst, spaces='  ', delimiter=', ', elements_per_line
   # Create lines of up to elements_per_line elements
   lines = [delimiter.join(elements[i:i + elements_per_line]) for i in range(0, len(elements), elements_per_line)]
   # Add a comma at the end of each line except the last line
-  formatted_lines = [spaces+line + delimiter if i < len(lines) - 1 else spaces+line for i, line in enumerate(lines)]
+  formatted_lines = [spaces+line + delimiter.rstrip(' ') if i < len(lines) - 1 else spaces+line for i, line in enumerate(lines)]
   ###formatted_lines[0] = formatted_lines[0].lstrip(' ')
   return formatted_lines
 
@@ -173,15 +173,15 @@ with open(yfile2, 'r') as infile, open(yfile, 'w') as outfile:
                 anchor_name = "ermax"
             elif "_anchor_icld_det:" in line:
                 anchor_name = "icld_det"
-            mysis = line.split('&')[1].strip().split('[')[0].strip()[len(f'{anchor_name}_'):] # get the SIS id
+            mysis = line.split('&')[1].strip().split('[')[0].strip()[:-len(f'{anchor_name}_')] # get the SIS id
             knt = line.find('&') + 1
             pre_spaces = ' ' * knt
             tmp_str = list_to_delimited_string(dcSatInfo[mysis][anchor_name], pre_spaces)
             new_str = '\n'.join(map(str, tmp_str))
-            if f'&{anchor_name}_{mysis} [1]' in line: # simple template [1]
-                line = line.replace(f'&{anchor_name}_{mysis} [1]', f'&{anchor_name}_{mysis} [\n{new_str}]').rstrip(' ')
+            if f'&{mysis}_{anchor_name} [1]' in line: # simple template [1]
+                line = line.replace(f'&{mysis}_{anchor_name} [1]', f'&{mysis}_{anchor_name} [\n{new_str}]').rstrip(' ')
             else:
-                line = line.replace(f'&{anchor_name}_{mysis} [', f'&{anchor_name}_{mysis} [\n{new_str}]').rstrip(' ')
+                line = line.replace(f'&{mysis}_{anchor_name} [', f'&{mysis}_{anchor_name} [\n{new_str}]').rstrip(' ')
                 anchor_skip_old_values = True
             buffer_zone.append(line)
         elif anchor_skip_old_values:
