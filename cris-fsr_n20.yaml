@@ -72,11 +72,11 @@ cost function:
      #  -----------------------
      - obs space:
          name: cris-fsr_n20 
-         _anchor_channel: &channel_cris-fsr_n20 [1]
-         _anchor_iuse: &iuse_cris-fsr_n20 [1]
-         _anchor_icld_det: &icld_det_cris-fsr_n20 [1]
-         _anchor_error: &error_cris-fsr_n20 [1]
-         _anchor_ermax: &ermax_cris-fsr_n20 [1]
+         _anchor_channel: &cris-fsr_n20_channel [1]
+         _anchor_iuse: &cris-fsr_n20_iuse [1]
+         _anchor_icld_det: &cris-fsr_n20_icld_det [1]
+         _anchor_error: &cris-fsr_n20_error [1]
+         _anchor_ermax: &cris-fsr_n20_ermax [1]
          distribution:
            name: "RoundRobin"
            halo size: 100e3
@@ -93,7 +93,7 @@ cost function:
          observed variables: [radiance]
          simulated variables: [brightnessTemperature]
          derived variables: [brightnessTemperature]
-         channels: *channel_cris-fsr_n20
+         channels: *cris-fsr_n20_channel
 
        # Observation Operator
        # --------------------
@@ -155,7 +155,7 @@ cost function:
        - filter: Create Diagnostic Flags
          filter variables:
          - name: brightnessTemperature
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
          flags:
          - name: ScanEdgeRemoval
            initial value: false
@@ -291,14 +291,14 @@ cost function:
        - filter: Variable Assignment
          assignments:
          - name: ObsValuex1000/radiance
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
            type: float
            function:
              name: ObsFunction/Arithmetic
              options:
                variables:
                - name: ObsValue/radiance
-                 channels: *channel_cris-fsr_n20
+                 channels: *cris-fsr_n20_channel
                coefs: [0.01]
         
        # Transform radiance to brightness temperature
@@ -306,10 +306,10 @@ cost function:
          Transform: SatBrightnessTempFromRad
          transform from:
            name: ObsValuex1000/radiance
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
          spectral variable:
            name: MetaData/sensorCentralWavenumber
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
          radiance units: wavenumber
          planck1: 1.191042953e-16
          planck2: 1.4387774e-2
@@ -320,17 +320,17 @@ cost function:
        - filter: Perform Action
          filter variables:
          - name: brightnessTemperature
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
            sensor: &sensor_id cris-fsr_n20
          action:
            name: assign error
-           error parameter vector: *error_cris-fsr_n20 
+           error parameter vector: *cris-fsr_n20_error 
                      
        # Step 1: Remove Observations from the Edge of the Scan
        - filter: Domain Check
          filter variables:
          - name: brightnessTemperature
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
          where:
          - variable:
              name: MetaData/sensorScanPosition
@@ -344,7 +344,7 @@ cost function:
        - filter: Gaussian Thinning
          filter variables:
          - name: brightnessTemperature
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
          horizontal_mesh: 60 
          use_reduced_horizontal_grid: true
          distance_norm: geodesic
@@ -362,7 +362,7 @@ cost function:
        - filter: Bounds Check
          filter variables:
          - name: brightnessTemperature
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
          test variables:
          - name: GeoVaLs/observable_domain_mask
            flag all filter variables if any test variable is out of bounds: true
@@ -389,14 +389,14 @@ cost function:
        - filter: Perform Action
          filter variables:
          - name: brightnessTemperature
-           channels: *channel_cris-fsr_n20 
+           channels: *cris-fsr_n20_channel 
          action:
            name: inflate error
            inflation variable:
              name: ObsErrorFactorWavenumIR@ObsFunction
-             channels: *channel_cris-fsr_n20 
+             channels: *cris-fsr_n20_channel 
              options:
-               channels: *channel_cris-fsr_n20 
+               channels: *cris-fsr_n20_channel 
 
        # Step 5: Observation Range Sanity Check
        # Valid range: (50, 550)
@@ -404,7 +404,7 @@ cost function:
        - filter: Bounds Check
          filter variables:
          - name: brightnessTemperature
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
          minvalue: 50.00001
          maxvalue: 549.99999
          action:
@@ -415,14 +415,14 @@ cost function:
        - filter: Perform Action
          filter variables:
          - name: brightnessTemperature
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
          action:
            name: inflate error
            inflation variable:
              name: ObsErrorFactorTopoRad@ObsFunction
-             channels: *channel_cris-fsr_n20
+             channels: *cris-fsr_n20_channel
              options:
-               channels: *channel_cris-fsr_n20
+               channels: *cris-fsr_n20_channel
                sensor: *sensor_id
 
        # Step 7: Transmittance Top Check
@@ -430,30 +430,30 @@ cost function:
        - filter: Perform Action
          filter variables:
          - name: brightnessTemperature
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
          action:
            name: inflate error
            inflation variable:
              name: ObsErrorFactorTransmitTopRad@ObsFunction
-             channels: *channel_cris-fsr_n20
+             channels: *cris-fsr_n20_channel
              options:
-               channels: *channel_cris-fsr_n20
+               channels: *cris-fsr_n20_channel
 
        # Step 8: Cloud Detection Check
        # -----------------------------
        - filter: Bounds Check
          filter variables:
          - name: brightnessTemperature
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
          test variables:
          - name: CloudDetectMinResidualIR@ObsFunction
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
            options:
-             channels: *channel_cris-fsr_n20 
-             use_flag: *iuse_cris-fsr_n20 
-             use_flag_clddet: *icld_det_cris-fsr_n20 
+             channels: *cris-fsr_n20_channel 
+             use_flag: *cris-fsr_n20_iuse 
+             use_flag_clddet: *cris-fsr_n20_icld_det 
              obserr_dtempf: [0.50, 2.00, 4.00, 2.00, 4.00]
-             error parameter vector: *error_cris-fsr_n20 
+             error parameter vector: *cris-fsr_n20_error 
          maxvalue: 1.0e-12
          action:
            name: reject
@@ -462,13 +462,13 @@ cost function:
        - filter: Bounds Check
          filter variables:
          - name: brightnessTemperature
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
          test variables:
          - name: NearSSTRetCheckIR@ObsFunction
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
            options:
-             channels: *channel_cris-fsr_n20
-             use_flag: *iuse_cris-fsr_n20 
+             channels: *cris-fsr_n20_channel
+             use_flag: *cris-fsr_n20_iuse 
              obserr_demisf: [0.01, 0.02, 0.03, 0.02, 0.03]
              obserr_dtempf: [0.50, 2.00, 4.00, 2.00, 4.00]
          maxvalue: 1.0e-12
@@ -480,14 +480,14 @@ cost function:
        - filter: Perform Action
          filter variables:
          - name: brightnessTemperature
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
          action:
            name: inflate error
            inflation variable:
              name: ObsFunction/ObsErrorFactorSurfJacobianRad
-             channels: *channel_cris-fsr_n20
+             channels: *cris-fsr_n20_channel
              options:
-               channels: *channel_cris-fsr_n20
+               channels: *cris-fsr_n20_channel
                obserr_demisf: [0.01, 0.02, 0.03, 0.02, 0.03]
                obserr_dtempf: [0.50, 2.00, 4.00, 2.00, 4.00]
                sensor: *sensor_id 
@@ -497,23 +497,23 @@ cost function:
        - filter: Background Check
          filter variables:
          - name: brightnessTemperature
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
          function absolute threshold:
          - name: ObsFunction/ObsErrorBoundIR
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
            options:
-             channels: *channel_cris-fsr_n20
+             channels: *cris-fsr_n20_channel
              obserr_bound_latitude:
                name: ObsFunction/ObsErrorFactorLatRad
                options:
                  latitude_parameters: [25.0, 0.5, 0.04, 1.0]
              obserr_bound_transmittop:
                name: ObsFunction/ObsErrorFactorTransmitTopRad
-               channels: *channel_cris-fsr_n20
+               channels: *cris-fsr_n20_channel
                options:
-                 channels: *channel_cris-fsr_n20
-             obserr_bound_max: *errmax_cris-fsr_n20
-             error parameter vector: *error_cris-fsr_n20
+                 channels: *cris-fsr_n20_channel
+             obserr_bound_max: *cris-fsr_n20_ermax
+             error parameter vector: *cris-fsr_n20_error
          action:
            name: reject
 
@@ -522,13 +522,13 @@ cost function:
        - filter: Bounds Check
          filter variables:
          - name: brightnessTemperature
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
          test variables:
          - name: ChannelUseflagCheckRad@ObsFunction
-           channels: *channel_cris-fsr_n20
+           channels: *cris-fsr_n20_channel
            options:
-             channels: *channel_cris-fsr_n20
-             use_flag: *iuse_cris-fsr_n20
+             channels: *cris-fsr_n20_channel
+             use_flag: *cris-fsr_n20_iuse
          minvalue: 1.0e-12
          action:
            name: reject
