@@ -15,7 +15,7 @@ The anchors should be placed between `obs space.name` and `obs space.distributio
            name: "RoundRobin"
            halo size: 100e3
 ```
-You can check [cris-fsr_n20.yaml](https://github.com/guoqing-noaa/satinfo2yaml/blob/81f5b05bf5749efb35e3399818c200e50d721db8/cris-fsr_n20.yaml#L73-L79) or [cris-fsr_n20_finalized.yaml](https://github.com/guoqing-noaa/satinfo2yaml/blob/81f5b05bf5749efb35e3399818c200e50d721db8/cris-fsr_n20_finalized.yaml#L73-L189)    
+You can check [cris-fsr_n20.yaml](https://github.com/guoqing-noaa/satinfo2yaml/blob/main/cris-fsr_n20.yaml#L73-L79) or [cris-fsr_n20_finalized.yaml](https://github.com/guoqing-noaa/satinfo2yaml/blob/main/cris-fsr_n20_finalized.yaml#L73-L189)    
 Rules:   
 - (1) each anchor is a value paired with a non-functional key, which has no impact on the JEDI DA functionality. The key starts with `_anchor_` and is followed by a field name (`channel`, `iuse`, etc)    
 - (2) The anchor name starts with the SIS name (eg. `cirs-fsr_n20`, `atms_npp`, etc) and is followed by the corresponding field name.
