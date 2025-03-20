@@ -66,11 +66,11 @@ if os.path.exists('satinfo'):
                     if sis in dcSatInfo:
                       dcSIS=dcSatInfo[sis]
                     else:
-                      dcSIS = {'channel':[],'iuse':[],'error':[],'error_cld':[],'ermax':[],
+                      dcSIS = {'channels':[],'iuse':[],'error':[],'error_cld':[],'ermax':[],
                           'var_b':[],'var_pg':[],'icld_det':[],'icloud':[],'iaerosol':[],
                           }
                     #
-                    dcSIS['channel'].append(fields[1])
+                    dcSIS['channels'].append(fields[1])
                     dcSIS['iuse'].append(fields[2])
                     dcSIS['error'].append(fields[3])
                     dcSIS['error_cld'].append(fields[4])
@@ -186,8 +186,8 @@ with open(yfile2, 'r') as infile, open(yfile, 'w') as outfile:
             if not use_obs:
                 #print("found a sat anchor, but the SIS is not in 'satinfo' or empty/corrupt 'satinfo'")
                 continue
-            if "_anchor_channel:" in line:
-                anchor_name = "channel"
+            if "_anchor_channels:" in line:
+                anchor_name = "channels"
             elif "_anchor_iuse:" in line:
                 anchor_name = "iuse"
             elif "_anchor_error:" in line:

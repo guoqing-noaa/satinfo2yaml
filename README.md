@@ -20,7 +20,7 @@ Rules:
 - (1) each anchor is a value paired with a non-functional key, which has no impact on the JEDI DA functionality. The key starts with `_anchor_` and is followed by a field name (`channel`, `iuse`, etc)    
 - (2) The anchor name starts with the SIS name (eg. `cirs-fsr_n20`, `atms_npp`, etc) and is followed by the corresponding field name.
 - (3) To start, one can add ` [1]` after each anchor name as a placeholder. `yaml_finalize` will read the correct values from satinfo and put them at the placeholder location. Check the above two cris-fsr_n20 yaml files for an example.    
-- (4) No `s` after each anchor name, i.e. use `channel`, `iuse` directly instead of `channels`, `iuses`.
+- (4) No `s` after each anchor name except `channels`. So we use `iuse`, `error`, `ermax`, etc.
 - (5) To be consistent with convinfo and satinfo, we use `ermax`, `ermin` instead of `errmax`, `errmin`
 
 ##### 2. Copy satinfo to current directory and touch a fake ioda file
