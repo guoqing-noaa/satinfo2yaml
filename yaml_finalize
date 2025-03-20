@@ -109,6 +109,12 @@ for key,value in dcConvInfo.items():
         conv_list.append(key)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# if both conv_list and dcSatInfo are empty, print a warning message
+#
+if not conv_list and not dcSatInfo:
+  print("Warning: no convinfo/satinfo or empty/corrupt convinfo/satinfo")
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # generate the yaml file on the fly
 #
 yfile = args[1]
@@ -157,12 +163,15 @@ with open(yfile2, 'r') as infile, open(yfile, 'w') as outfile:
                     break
             # ~~~~~~
             if not use_obs: # check whether it is a satellite observation
-                for obs,info in dcSatInfo.items():
+                for obs in dcSatInfo:
                     if obs in line:
                         use_obs = True
                         break
 
         elif "_anchor_" in line:
+            if not dcSatInfo:
+                print("found a sat anchor, but no satinfo or empty/corrupt satinfo")
+                continue
             if "_anchor_channel:" in line:
                 anchor_name = "channel"
             elif "_anchor_iuse:" in line:
