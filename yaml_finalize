@@ -3,9 +3,6 @@
 import os
 import sys
 #
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# get command line inputs
-#
 def list_to_delimited_string(lst, spaces='  ', delimiter=', ', elements_per_line=20):
   # Convert the list to a comma-separated string with the specified delimiter
   joined_string = delimiter.join(map(str, lst))
@@ -112,7 +109,7 @@ for key,value in dcConvInfo.items():
 # if both conv_list and dcSatInfo are empty, print a warning message
 #
 if not conv_list and not dcSatInfo:
-  print("Warning: no convinfo/satinfo or empty/corrupt convinfo/satinfo")
+    print("Warning: no convinfo/satinfo or empty/corrupt convinfo/satinfo")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # generate the yaml file on the fly
