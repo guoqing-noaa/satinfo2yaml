@@ -23,8 +23,14 @@ Rules:
 - (4) No `s` after each anchor name, i.e. use `channel`, `iuse` directly instead of `channels`, `iuses`.
 - (5) To be consistent with convinfo and satinfo, we use `ermax`, `ermin` instead of `errmax`, `errmin`
 
-##### 2. Copy satinfo to current directory
-`yaml_finalize` assumes the `satinfo` file is available under the current directory. NOTE: it is `satinfo` without any suffixes.
+##### 2. Copy satinfo to current directory and touch a fake ioda file
+- (1) `yaml_finalize` assumes the `satinfo` file is available under the current directory. NOTE: it is `satinfo` without any suffixes.    
+- (2) Create a fake corresponding ioda file as follows:
+```
+touch ioda_cirs-fsr_n20.nc
+touch ioda_atms_npp.nc
+```
+If no corresponding ioda files are available under the current directory, `yaml_finalize` will remove corresponding obs types from the final YAML file.
 
 ##### 3. Get `yaml_finalize`
 ```
