@@ -196,16 +196,19 @@ with open(yfile2, 'r') as infile, open(yfile, 'w') as outfile:
                 anchor_name = "ermax"
             elif "_anchor_icld_det:" in line:
                 anchor_name = "icld_det"
-            mysis = line.split('&')[1].strip().split('[')[0].strip()[:-len(f'{anchor_name}_')] # get the SIS id
+            mysis = line.split('&')[1].strip().split(' ', 1)[0].strip()[:-len(f'{anchor_name}_')] # get the SIS id
             knt = line.find('&') + 1
             pre_spaces = ' ' * knt
             tmp_str = list_to_delimited_string(dcSatInfo[mysis][anchor_name], pre_spaces)
             new_str = '\n'.join(map(str, tmp_str))
-            if f'&{mysis}_{anchor_name} [1]' in line: # simple template [1]
-                line = line.replace(f'&{mysis}_{anchor_name} [1]', f'&{mysis}_{anchor_name} [\n{new_str}]').rstrip(' ')
+            nSpaces = len(line) - len(line.lstrip())
+            spaces = " "*nSpaces
+            if anchor_name == "channels":
+                values = f"\n{new_str}"
             else:
-                line = line.replace(f'&{mysis}_{anchor_name} [', f'&{mysis}_{anchor_name} [\n{new_str}]').rstrip(' ')
-                anchor_skip_old_values = True
+                values = f" [\n{new_str}]"
+            line = f"{spaces}_anchor_{anchor_name}: &{mysis}_{anchor_name}{values}\n"
+            anchor_skip_old_values = True
             buffer_zone.append(line)
         elif anchor_skip_old_values:
             if "distribution:" in line:

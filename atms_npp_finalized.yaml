@@ -115,9 +115,9 @@ cost function:
      observers:
      - obs space:
          name: atms_npp
-         _anchor_channels: &atms_npp_channels [
+         _anchor_channels: &atms_npp_channels
                             1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-                            21, 22]
+                            21, 22
          _anchor_iuse: &atms_npp_iuse [
                         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1, 1, 1, 1, 1, 1,
                         1, 1]
