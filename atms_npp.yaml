@@ -115,7 +115,7 @@ cost function:
      observers:
      - obs space:
          name: atms_npp
-         _anchor_channels: &atms_npp_channels [1]
+         _anchor_channels: &atms_npp_channels 1
          _anchor_iuse: &atms_npp_iuse [1]
          _anchor_icld_det: &atms_npp_icld_det [1]
          distribution:
