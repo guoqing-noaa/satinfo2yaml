@@ -6,7 +6,7 @@ The anchors should be placed between `obs space.name` and `obs space.distributio
 ```
      - obs space:
          name: cris-fsr_n20 
-         _anchor_channels: &cris-fsr_n20_channels [1]
+         _anchor_channels: &cris-fsr_n20_channels 1
          _anchor_iuse: &cris-fsr_n20_iuse [1]
          _anchor_icld_det: &cris-fsr_n20_icld_det [1]
          _anchor_error: &cris-fsr_n20_error [1]
