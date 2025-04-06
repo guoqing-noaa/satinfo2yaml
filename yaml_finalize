@@ -3,23 +3,26 @@
 import os
 import sys
 #
+
+
 def list_to_delimited_string(lst, spaces='  ', delimiter=', ', elements_per_line=20):
-  # Convert the list to a comma-separated string with the specified delimiter
-  joined_string = delimiter.join(map(str, lst))
-  # Split the joined string into chunks of elements_per_line
-  elements = joined_string.split(delimiter)
-  # Create lines of up to elements_per_line elements
-  lines = [delimiter.join(elements[i:i + elements_per_line]) for i in range(0, len(elements), elements_per_line)]
-  # Add a comma at the end of each line except the last line
-  formatted_lines = [spaces+line + delimiter.rstrip(' ') if i < len(lines) - 1 else spaces+line for i, line in enumerate(lines)]
-  ###formatted_lines[0] = formatted_lines[0].lstrip(' ')
-  return formatted_lines
+    # Convert the list to a comma-separated string with the specified delimiter
+    joined_string = delimiter.join(map(str, lst))
+    # Split the joined string into chunks of elements_per_line
+    elements = joined_string.split(delimiter)
+    # Create lines of up to elements_per_line elements
+    lines = [delimiter.join(elements[i:i + elements_per_line]) for i in range(0, len(elements), elements_per_line)]
+    # Add a comma at the end of each line except the last line
+    formatted_lines = [spaces + line + delimiter.rstrip(' ') if i < len(lines) - 1 else spaces + line for i, line in enumerate(lines)]
+    # formatted_lines[0] = formatted_lines[0].lstrip(' ')
+    return formatted_lines
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # get command line inputs
 #
 args = sys.argv
-nargs = len(args)-1
+nargs = len(args) - 1
 if nargs < 1:
     print(f"{args[0]} [yaml_file]\n")
     exit()
@@ -27,60 +30,60 @@ if nargs < 1:
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # read the iuse information from convinfo for conventional observations
 #
-dcConvInfo  = {}
+dcConvInfo = {}
 if os.path.exists('convinfo'):
-  with open('convinfo','r') as sfile:
-      for line in sfile:
-          if not line.strip().startswith("!"):
-              fields = line.split()
-              if len(fields) == 9:
-                  atype = fields[0]
-                  if fields[1] != '0':
-                      atype += fields[1].zfill(3)
-                  if fields[2] != '0':
-                      atype += "_" + fields[2].zfill(3)
-                  #
-                  dcTMP = {
-                      'iuse': fields[3],
-                      'twindow': fields[4],
-                      'gross': fields[5],
-                      'ermax': fields[6],
-                      'ermin': fields[7],
-                      'msgtype': fields[8],
-                      }
-                  dcConvInfo[atype] = dcTMP
-              else:
-                  print(f"read_convinfo Warning: expected 9 fields\n{line}")
+    with open('convinfo', 'r') as sfile:
+        for line in sfile:
+            if not line.strip().startswith("!"):
+                fields = line.split()
+                if len(fields) == 9:
+                    atype = fields[0]
+                    if fields[1] != '0':
+                        atype += fields[1].zfill(3)
+                    if fields[2] != '0':
+                        atype += "_" + fields[2].zfill(3)
+                    #
+                    dcTMP = {
+                        'iuse': fields[3],
+                        'twindow': fields[4],
+                        'gross': fields[5],
+                        'ermax': fields[6],
+                        'ermin': fields[7],
+                        'msgtype': fields[8],
+                    }
+                    dcConvInfo[atype] = dcTMP
+                else:
+                    print(f"read_convinfo Warning: expected 9 fields\n{line}")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # read satinfo
 #
-dcSatInfo  = {}
+dcSatInfo = {}
 if os.path.exists('satinfo'):
-    with open('satinfo','r') as sfile:
+    with open('satinfo', 'r') as sfile:
         for line in sfile:
             if not line.strip().startswith("!"):
                 fields = line.split()
                 if len(fields) == 11:
-                    sis = fields[0]  #sensor/instr/sat
+                    sis = fields[0]  # sensor/instr/sat
                     if sis in dcSatInfo:
-                      dcSIS=dcSatInfo[sis]
+                        dcSIS = dcSatInfo[sis]
                     else:
-                      dcSIS = {'channels':[],'iuse':[],'error':[],'error_cld':[],'ermax':[],
-                          'var_b':[],'var_pg':[],'icld_det':[],'icloud':[],'iaerosol':[],
-                          }
+                        dcSIS = {'channels': [], 'use_flag': [], 'error': [], 'error_cld': [], 'obserr_bound_max': [],
+                                 'var_b': [], 'var_pg': [], 'use_flag_clddet': [], 'icloud': [], 'iaerosol': [],
+                                 }
                     #
                     dcSIS['channels'].append(fields[1])
-                    dcSIS['iuse'].append(fields[2])
+                    dcSIS['use_flag'].append(fields[2])
                     dcSIS['error'].append(fields[3])
                     dcSIS['error_cld'].append(fields[4])
-                    dcSIS['ermax'].append(fields[5])
+                    dcSIS['obserr_bound_max'].append(fields[5])
                     dcSIS['var_b'].append(fields[6])
                     dcSIS['var_pg'].append(fields[7])
-                    dcSIS['icld_det'].append(fields[8])
+                    dcSIS['use_flag_clddet'].append(fields[8])
                     dcSIS['icloud'].append(fields[9])
                     dcSIS['iaerosol'].append(fields[10])
-                    dcSatInfo[sis]=dcSIS
+                    dcSatInfo[sis] = dcSIS
                 else:
                     print(f"read_satinfo warning: expected 11 fields\n{line}")
 
@@ -90,32 +93,32 @@ if os.path.exists('satinfo'):
 
 # ~~~~~~~~~~~~~
 # remove some atypes if conventional obs files not available
-if dcConvInfo: # if non empty
-    dcOBS={
-        'ioda_adpupa.nc': ['t120','q120','ps120','uv220'],
-        'ioda_aircar.nc': ['t133','q133','uv223'],
-        }
+if dcConvInfo:  # if non empty
+    dcOBS = {
+        'ioda_adpupa.nc': ['t120', 'q120', 'ps120', 'uv220'],
+        'ioda_aircar.nc': ['t133', 'q133', 'uv233'],
+    }
     for iodafile, keys_to_remove in dcOBS.items():
-        if not os.path.exists(iodafile):
+        if not os.path.exists(f"data/obs/{iodafile}"):
             for key in keys_to_remove:
-                dcConvInfo.pop(key,None) # `None` prevents KeyError if key doesn't exist
+                dcConvInfo.pop(key, None)  # `None` prevents KeyError if key doesn't exist
 # ~~~~~~~~~~~~~
 # remove some SIS if satellite obs files not available
-if dcSatInfo: # if non empty
-    dcOBS={
+if dcSatInfo:  # if non empty
+    dcOBS = {
         'ioda_atms_npp.nc': ['atms_npp'],
         'ioda_cris-fsr_n20.nc': ['cris-fsr_n20'],
-        }
+    }
     for iodafile, keys_to_remove in dcOBS.items():
-        if not os.path.exists(iodafile):
+        if not os.path.exists(f"data/obs/{iodafile}"):
             for key in keys_to_remove:
-                dcSatInfo.pop(key,None) # `None` prevents KeyError if key doesn't exist
+                dcSatInfo.pop(key, None)  # `None` prevents KeyError if key doesn't exist
 
 # ~~~~~~~~~~~~~
 # assemble a final conventional obs use list
 conv_list = []
 for key,value in dcConvInfo.items():
-    if value['iuse'] != "0":
+    if value['iuse'] == "1":
         conv_list.append(key)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -137,7 +140,7 @@ yfile2 = basename + "_old001.yaml"
 #
 # find an available file name and backup the old yaml file
 if os.path.exists(yfile2):
-    knt=1
+    knt = 1
     yfile2 = f'{basename}_old{knt:03}.yaml'
     while os.path.exists(yfile2):
         knt += 1
@@ -164,7 +167,7 @@ with open(yfile2, 'r') as infile, open(yfile, 'w') as outfile:
                 in_buffer_zone = False
                 use_obs = False
                 anchor_skip_old_values = False
-            #~~~~~
+            # ~~~~~
             just_read_new_obs_space = True
             in_buffer_zone = True
             buffer_zone.append(line)
@@ -172,11 +175,11 @@ with open(yfile2, 'r') as infile, open(yfile, 'w') as outfile:
             just_read_new_obs_space = False
             buffer_zone.append(line)
             for obs in conv_list:
-                if obs in line:
+                if obs in line and obs not in ["dw", "srw", "rw"]:
                     use_obs = True
                     break
             # ~~~~~~
-            if not use_obs: # check whether it is a satellite observation
+            if not use_obs:  # check whether it is a satellite observation
                 for obs in dcSatInfo:
                     if obs in line:
                         use_obs = True
@@ -184,19 +187,19 @@ with open(yfile2, 'r') as infile, open(yfile, 'w') as outfile:
 
         elif "_anchor_" in line:
             if not use_obs:
-                #print("found a sat anchor, but the SIS is not in 'satinfo' or empty/corrupt 'satinfo'")
+                # print("found a sat anchor, but the SIS is not in 'satinfo' or empty/corrupt 'satinfo'")
                 continue
             if "_anchor_channels:" in line:
                 anchor_name = "channels"
-            elif "_anchor_iuse:" in line:
-                anchor_name = "iuse"
+            elif "_anchor_use_flag:" in line:
+                anchor_name = "use_flag"
             elif "_anchor_error:" in line:
                 anchor_name = "error"
-            elif "_anchor_ermax:" in line:
-                anchor_name = "ermax"
-            elif "_anchor_icld_det:" in line:
-                anchor_name = "icld_det"
-            mysis = line.split('&')[1].strip().split(' ', 1)[0].strip()[:-len(f'{anchor_name}_')] # get the SIS id
+            elif "_anchor_obserr_bound_max:" in line:
+                anchor_name = "obserr_bound_max"
+            elif "_anchor_use_flag_clddet:" in line:
+                anchor_name = "use_flag_clddet"
+            mysis = line.split('&')[1].strip().split(' ', 1)[0].strip()[:-len(f'{anchor_name}_')]  # get the SIS id
             knt = line.find('&') + 1
             pre_spaces = ' ' * knt
             tmp_str = list_to_delimited_string(dcSatInfo[mysis][anchor_name], pre_spaces)
@@ -219,7 +222,7 @@ with open(yfile2, 'r') as infile, open(yfile, 'w') as outfile:
 
         if not in_buffer_zone:
             outfile.write(line)
-    #~~~~
+    # ~~~~
     if buffer_zone:
         if use_obs:
             for buf_line in buffer_zone:
