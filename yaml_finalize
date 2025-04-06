@@ -89,31 +89,6 @@ if os.path.exists('satinfo'):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # generate the final use_obs list
-#
-
-# ~~~~~~~~~~~~~
-# remove some atypes if conventional obs files not available
-if dcConvInfo:  # if non empty
-    dcOBS = {
-        'ioda_adpupa.nc': ['t120', 'q120', 'ps120', 'uv220'],
-        'ioda_aircar.nc': ['t133', 'q133', 'uv233'],
-    }
-    for iodafile, keys_to_remove in dcOBS.items():
-        if not os.path.exists(f"data/obs/{iodafile}"):
-            for key in keys_to_remove:
-                dcConvInfo.pop(key, None)  # `None` prevents KeyError if key doesn't exist
-# ~~~~~~~~~~~~~
-# remove some SIS if satellite obs files not available
-if dcSatInfo:  # if non empty
-    dcOBS = {
-        'ioda_atms_npp.nc': ['atms_npp'],
-        'ioda_cris-fsr_n20.nc': ['cris-fsr_n20'],
-    }
-    for iodafile, keys_to_remove in dcOBS.items():
-        if not os.path.exists(f"data/obs/{iodafile}"):
-            for key in keys_to_remove:
-                dcSatInfo.pop(key, None)  # `None` prevents KeyError if key doesn't exist
-
 # ~~~~~~~~~~~~~
 # assemble a final conventional obs use list
 conv_list = []
@@ -186,26 +161,25 @@ with open(yfile2, 'r') as infile, open(yfile, 'w') as outfile:
                         break
 
         elif "_anchor_" in line:
-            if not use_obs:
+            if not use_obs:  # use_obs is determined after the above `if` and `elif`
                 # print("found a sat anchor, but the SIS is not in 'satinfo' or empty/corrupt 'satinfo'")
                 continue
             if "_anchor_channels:" in line:
                 anchor_name = "channels"
+            elif "_anchor_use_flag_clddet:" in line:  # process _anchor_use_flag_clddet before _anchor_use_flag
+                anchor_name = "use_flag_clddet"
             elif "_anchor_use_flag:" in line:
                 anchor_name = "use_flag"
             elif "_anchor_error:" in line:
                 anchor_name = "error"
             elif "_anchor_obserr_bound_max:" in line:
                 anchor_name = "obserr_bound_max"
-            elif "_anchor_use_flag_clddet:" in line:
-                anchor_name = "use_flag_clddet"
             mysis = line.split('&')[1].strip().split(' ', 1)[0].strip()[:-len(f'{anchor_name}_')]  # get the SIS id
-            knt = line.find('&') + 1
-            pre_spaces = ' ' * knt
-            tmp_str = list_to_delimited_string(dcSatInfo[mysis][anchor_name], pre_spaces)
-            new_str = '\n'.join(map(str, tmp_str))
             nSpaces = len(line) - len(line.lstrip())
             spaces = " "*nSpaces
+            pre_spaces = spaces + "    " #  add extra 4 spaces for anchor values
+            tmp_str = list_to_delimited_string(dcSatInfo[mysis][anchor_name], pre_spaces)
+            new_str = '\n'.join(map(str, tmp_str))
             if anchor_name == "channels":
                 values = f"\n{new_str}"
             else:
