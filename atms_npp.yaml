@@ -116,8 +116,8 @@ cost function:
      - obs space:
          name: atms_npp
          _anchor_channels: &atms_npp_channels 1
-         _anchor_iuse: &atms_npp_iuse [1]
-         _anchor_icld_det: &atms_npp_icld_det [1]
+         _anchor_use_flag: &atms_npp_use_flag [1]
+         _anchor_use_flag_clddet: &atms_npp_use_flag_clddet [1]
          distribution:
            name: "RoundRobin"
          obsdatain:
@@ -666,7 +666,7 @@ cost function:
              channels: *atms_npp_channels
              use passive_bc: true
              sensor: atms_npp
-             use_flag: *atms_npp_iuse
+             use_flag: *atms_npp_use_flag
          maxvalue: 1.0e-12
          actions:
            - name: set
@@ -684,7 +684,7 @@ cost function:
            channels: *atms_npp_channels
            options:
              channels: *atms_npp_channels
-             use_flag: *atmos_npp_iuse
+             use_flag: *atms_npp_use_flag
          minvalue: 1.0e-12
          actions:
            - name: set
