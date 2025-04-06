@@ -100,11 +100,11 @@ for key,value in dcConvInfo.items():
 # if both conv_list and dcSatInfo are empty, print a warning message
 #
 if not conv_list and not dcSatInfo:
-    print("WARNING: no convinfo/satinfo, empty/corrupt convinfo/satinfo or ioda files not available")
+    print("WARNING: no convinfo/satinfo, or empty/corrupt convinfo/satinfo")
 elif not conv_list:
-    print("INFO: no convinfo, empty/corrupt convinfo, or conventional ioda files not available")
+    print("INFO: no convinfo, or empty/corrupt convinfo")
 elif not dcSatInfo:
-    print("INFO: no satinfo or empty/corrupt satinfo, or satellite ioda files not available")
+    print("INFO: no satinfo, or empty/corrupt satinfo")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # generate the yaml file on the fly
